@@ -297,6 +297,7 @@ class WorkspaceSeedConfig(BaseModel):
     default_agent: str | None = None
     agents: list[str] | None = None
     apps: list[str] | None = None
+    ontologies: list[str] | None = None
 
 
 class OrganizationSeedConfig(BaseModel):

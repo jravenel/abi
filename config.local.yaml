@@ -114,6 +114,16 @@ modules:
         # Q: How is the organization structured into workspaces and roles?
         # A: Define orgs, their workspaces, and who belongs to each with what role.
         #    role: owner | admin | member | viewer
+        #    Optional per-workspace catalog rosters (same shape as agents/apps):
+        #      default_agent: "naas_abi AbiAgent"
+        #      agents:
+        #        - "naas_abi AbiAgent"
+        #      apps:
+        #        - example.module:dashboard
+        #      ontologies:
+        #        - "naas_abi ABIOntology"
+        #        - "bfo bfo-core"
+        #    Omit ontologies: to show every registered ontology file.
         organizations:
           - name: "ABI"
             slug: "abi"

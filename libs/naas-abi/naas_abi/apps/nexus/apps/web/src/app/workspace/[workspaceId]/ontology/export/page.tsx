@@ -66,7 +66,10 @@ export default function OntologyExportPage() {
     setFilesLoading(true);
     setFilesError(null);
     try {
-      const res = await authFetch(`${getApiUrl()}/api/ontology/ontologies`);
+      const qs = workspaceId
+        ? `?workspace_id=${encodeURIComponent(workspaceId)}`
+        : '';
+      const res = await authFetch(`${getApiUrl()}/api/ontology/ontologies${qs}`);
       if (!res.ok) throw new Error(`Failed to load ontologies (${res.status})`);
       const data = (await res.json()) as { items?: OntologyFileApiItem[] };
       const items = Array.isArray(data.items) ? data.items : [];
@@ -88,7 +91,7 @@ export default function OntologyExportPage() {
     } finally {
       setFilesLoading(false);
     }
-  }, []);
+  }, [workspaceId]);
 
   useEffect(() => {
     void loadFiles();

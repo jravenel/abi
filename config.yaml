@@ -74,12 +74,19 @@ modules:
                 members:
                   - email: "admin@example.com"
                     role: "owner"
+                # Optional catalog rosters. Same form as agents/apps.
+                # Omit ontologies: to show every registered ontology file.
+                # ontologies:
+                #   - "naas_abi ABIOntology"
+                #   - "bfo bfo-core"
               - name: "Alpha"
                 slug: "alpha"
                 owner_email: "admin@example.com"
                 members:
                   - email: "admin@example.com"
                     role: "owner"
+                ontologies:
+                  - "naas_abi ABIOntology"
               - name: "Beta"
                 slug: "beta"
                 owner_email: "admin@example.com"
