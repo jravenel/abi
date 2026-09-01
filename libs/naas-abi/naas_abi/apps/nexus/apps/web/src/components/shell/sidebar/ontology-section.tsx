@@ -6,7 +6,7 @@ import {
   BrainCircuit, ChevronRight, Box, Link2,
   RefreshCw, Upload, Download, BookOpen, FileCode,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useOntologyStore } from '@/stores/ontology';
 import { useWorkspaceStore } from '@/stores/workspace';
@@ -42,6 +42,7 @@ type ModuleSubmoduleGroup = {
 
 export function OntologySection({ collapsed, detailOnly }: { collapsed: boolean; detailOnly?: boolean }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [ontologyFiles, setOntologyFiles] = useState<OntologyFile[]>([]);
   const [expandedOntologyModules, setExpandedOntologyModules] = useState<string[]>([]);
   const [expandedOntologySubmodules, setExpandedOntologySubmodules] = useState<string[]>([]);
@@ -149,8 +150,11 @@ export function OntologySection({ collapsed, detailOnly }: { collapsed: boolean;
         if (!selectedStillVisible && normalizedFiles.length > 0) {
           const firstPath = normalizedFiles[0].path;
           setSelectedOntologyPath(firstPath);
-          const params = new URLSearchParams({ view: 'network', ontology: firstPath });
-          router.push(getWorkspacePath(currentWorkspaceId, `/ontology?${params.toString()}`));
+          const onOntologyRoute = pathname.includes('/ontology');
+          if (!selectedPath || onOntologyRoute) {
+            const params = new URLSearchParams({ view: 'network', ontology: firstPath });
+            router.push(getWorkspacePath(currentWorkspaceId, `/ontology?${params.toString()}`));
+          }
         } else if (!selectedStillVisible) {
           setSelectedOntologyPath(null);
         }
@@ -179,7 +183,7 @@ export function OntologySection({ collapsed, detailOnly }: { collapsed: boolean;
 
     fetchOntologyFiles();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentWorkspaceId]);
+  }, [currentWorkspaceId, pathname]);
 
   return (
     <CollapsibleSection
