@@ -4,7 +4,15 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse
-from naas_abi.apps.nexus.apps.api.app.api.endpoints.auth import get_current_user_required
+from naas_abi.apps.nexus.apps.api.app.api.endpoints.auth import (
+    User,
+    get_current_user_required,
+    require_workspace_access,
+)
+from naas_abi.apps.nexus.apps.api.app.core.workspace_catalog_seed import (
+    filter_ontology_files,
+    workspace_seed_for_slug,
+)
 from naas_abi.apps.nexus.apps.api.app.services.ontology.adapters.primary.ontology__primary_adapter__dependencies import (  # noqa: E501
     get_ontology_service,
 )
@@ -31,8 +39,20 @@ from naas_abi.apps.nexus.apps.api.app.services.ontology.ontology__schema import 
     OntologyServiceUnavailableError,
 )
 from naas_abi.apps.nexus.apps.api.app.services.ontology.service import OntologyService
+from sqlalchemy import select
 
 router = APIRouter(dependencies=[Depends(get_current_user_required)])
+
+
+async def _workspace_slug(workspace_id: str) -> str | None:
+    from naas_abi.apps.nexus.apps.api.app.core.database import AsyncSessionLocal
+    from naas_abi.apps.nexus.apps.api.app.models import WorkspaceModel
+
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            select(WorkspaceModel.slug).where(WorkspaceModel.id == workspace_id)
+        )
+        return result.scalar_one_or_none()
 
 
 class OntologyFastAPIPrimaryAdapter:
@@ -124,13 +144,28 @@ async def list_relations(
 
 @router.get("/ontologies")
 async def list_ontology_files(
+    workspace_id: str | None = Query(None),
+    current_user: User = Depends(get_current_user_required),
     ontology_service: OntologyService = Depends(get_ontology_service),
 ) -> dict:
-    """List ontology files from all registered modules."""
+    """List ontology files from all registered modules.
+
+    When ``workspace_id`` is set and that workspace seed has ``ontologies:``,
+    only matching files are returned. Omit ``ontologies:`` to keep the full
+    catalog.
+    """
+    if workspace_id:
+        await require_workspace_access(current_user.id, workspace_id)
     try:
         items = await ontology_service.list_ontology_files()
     except OntologyServiceUnavailableError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+    seed_refs: list[str] | None = None
+    if workspace_id:
+        seed = workspace_seed_for_slug(await _workspace_slug(workspace_id))
+        if seed is not None and seed.ontologies is not None:
+            seed_refs = list(seed.ontologies)
+    items = filter_ontology_files(items, seed_refs)
     return {
         "items": [
             OntologyFileItem(

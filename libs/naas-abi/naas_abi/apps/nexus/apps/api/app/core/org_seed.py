@@ -8,6 +8,8 @@ This provisions:
 - workspaces (upsert by slug)
 - workspace members
 - workspace app enable rows from ``WorkspaceSeedConfig.apps``
+- workspace ontology / agent rosters are read at request time from
+  ``WorkspaceSeedConfig.ontologies`` / ``agents`` (not persisted here)
 
 It can also mirror configured user credentials into the Secret service.
 """

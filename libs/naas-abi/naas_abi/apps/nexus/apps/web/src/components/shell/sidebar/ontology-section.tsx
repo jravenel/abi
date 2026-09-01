@@ -115,7 +115,10 @@ export function OntologySection({ collapsed, detailOnly }: { collapsed: boolean;
       setLoadingOntologyFiles(true);
       try {
         const apiUrl = getApiUrl();
-        const response = await authFetch(`${apiUrl}/api/ontology/ontologies`);
+        const qs = currentWorkspaceId
+          ? `?workspace_id=${encodeURIComponent(currentWorkspaceId)}`
+          : '';
+        const response = await authFetch(`${apiUrl}/api/ontology/ontologies${qs}`);
         if (!response.ok) {
           throw new Error(`Failed to fetch ontology files: ${response.status}`);
         }
@@ -139,13 +142,17 @@ export function OntologySection({ collapsed, detailOnly }: { collapsed: boolean;
           );
         setOntologyFiles(normalizedFiles);
 
-        // Auto-select and navigate to the first ontology when none is selected.
-        // Read from getState() so we see the post-hydration value.
-        if (!useOntologyStore.getState().selectedOntologyPath && normalizedFiles.length > 0) {
+        const selectedPath = useOntologyStore.getState().selectedOntologyPath;
+        const selectedStillVisible = Boolean(
+          selectedPath && normalizedFiles.some((file) => file.path === selectedPath)
+        );
+        if (!selectedStillVisible && normalizedFiles.length > 0) {
           const firstPath = normalizedFiles[0].path;
           setSelectedOntologyPath(firstPath);
           const params = new URLSearchParams({ view: 'network', ontology: firstPath });
           router.push(getWorkspacePath(currentWorkspaceId, `/ontology?${params.toString()}`));
+        } else if (!selectedStillVisible) {
+          setSelectedOntologyPath(null);
         }
 
         setExpandedOntologyModules(
@@ -172,7 +179,7 @@ export function OntologySection({ collapsed, detailOnly }: { collapsed: boolean;
 
     fetchOntologyFiles();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentWorkspaceId]);
 
   return (
     <CollapsibleSection
